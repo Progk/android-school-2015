@@ -1,17 +1,23 @@
 package com.elegion.githubclient.activity;
 
+import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
+import android.support.v7.widget.LinearLayoutCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 
 import com.elegion.githubclient.R;
 import com.elegion.githubclient.adapter.RepositoriesAdapter;
+import com.elegion.githubclient.adapter.decoration.RepositoryDecoration;
 import com.elegion.githubclient.api.ApiClient;
 import com.elegion.githubclient.model.Repository;
+import com.elegion.githubclient.utils.dialogs.ErrorDialog;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -24,7 +30,10 @@ import java.util.List;
 /**
  * @author Artem Mochalov.
  */
-public class MyRepositoriesActivity extends BaseActivity {
+public class MyRepositoriesActivity extends BaseActivity implements ErrorDialog.onClickListenerErrorDialog {
+
+    private static final String TAG_LOG = MyRepositoriesActivity.class.getName();
+    private static final String TAG_ERROR_DIALOG = "MyRepositoriesErrorDialog";
 
     private RecyclerView mRepositoryList;
 
@@ -36,6 +45,7 @@ public class MyRepositoriesActivity extends BaseActivity {
         mRepositoryList = (RecyclerView) findViewById(R.id.repositories_list);
         mRepositoryList.setLayoutManager(new LinearLayoutManager(this));
         mRepositoryList.setAdapter(new RepositoriesAdapter());
+        mRepositoryList.addItemDecoration(new RepositoryDecoration());
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -57,6 +67,12 @@ public class MyRepositoriesActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onClickPositiveButton() {
+        Intent intent = new Intent(this, UserActivity.class);
+        startActivity(intent);
+    }
+
     private class GetRepositoriesTask extends AsyncTask<Void, Void, List<Repository>> {
 
         @Override
@@ -70,7 +86,8 @@ public class MyRepositoriesActivity extends BaseActivity {
                         .executeGet();
 
                 if (responseObject.optInt(ApiClient.STATUS_CODE) != ApiClient.STATUS_CODE_OK) {
-                    //TODO: handle error
+                    cancel(true);
+                    return null;
                 }
 
                 JSONArray array = (JSONArray)responseObject.get(ApiClient.LIST_DATA_KEY);
@@ -92,6 +109,14 @@ public class MyRepositoriesActivity extends BaseActivity {
         @Override
         protected void onPostExecute(List<Repository> repositories) {
             ((RepositoriesAdapter)mRepositoryList.getAdapter()).addAll(repositories);
+        }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+            Log.d(TAG_LOG, "onCancelled");
+            ErrorDialog errorDialog = new ErrorDialog();
+            errorDialog.show(getSupportFragmentManager(), TAG_ERROR_DIALOG);
         }
     }
 }

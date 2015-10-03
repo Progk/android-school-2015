@@ -6,4 +6,6 @@
     <string name="logout">Выйти</string>
     <string name="ab_my_repositories">Мои репозитории</string>
     <string name="ab_my_profile">Мой профиль</string>
+    <string name="dialog_error">Что-то пошло не так!</string>
+    <string name="dialog_error_back_btn">Назад</string>
 </resources>

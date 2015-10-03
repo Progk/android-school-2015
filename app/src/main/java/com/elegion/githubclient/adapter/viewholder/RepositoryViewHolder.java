@@ -22,4 +22,5 @@ public class RepositoryViewHolder extends RecyclerView.ViewHolder {
     public void bindItem(Repository repository) {
         mRepositoryName.setText(repository.getName());
     }
+
 }

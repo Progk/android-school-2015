@@ -1,15 +1,18 @@
 package com.elegion.githubclient.activity;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.elegion.githubclient.AppDelegate;
 import com.elegion.githubclient.R;
 import com.elegion.githubclient.api.ApiClient;
+import com.elegion.githubclient.utils.dialogs.ErrorDialog;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -20,11 +23,13 @@ import java.io.IOException;
 /**
  * @author Artem Mochalov.
  */
-public class LoginActivity extends BaseActivity {
+public class LoginActivity extends BaseActivity implements ErrorDialog.onClickListenerErrorDialog {
 
     private static final String SOME_ERROR = "SOME_ERROR";
     public static final String ACCESS_TOKEN_RESPONSE_KEY = "access_token";
     private boolean mDataSend = false;
+    private static final String TAG_LOG = LoginActivity.class.getName();
+    private static final String TAG_ERROR_DIALOG = "LoginActivityErrorDialog";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +102,13 @@ public class LoginActivity extends BaseActivity {
                 + getString(R.string.scope);
     }
 
+    @Override
+    public void onClickPositiveButton() {
+        logout();
+        Intent intent = new Intent(this, LoginActivity.class);
+        startActivity(intent);
+    }
+
     private class ChangeCodeToAuthTokenTask extends AsyncTask<String, Void, Boolean> {
 
         @Override
@@ -117,7 +129,8 @@ public class LoginActivity extends BaseActivity {
                         .executePost();
 
                 if (responseObject.optInt(ApiClient.STATUS_CODE) != ApiClient.STATUS_CODE_OK) {
-                    //TODO: handle error
+                    cancel(true);
+                    return false;
                 }
 
                 String accessToken = responseObject.optString(ACCESS_TOKEN_RESPONSE_KEY);
@@ -145,5 +158,15 @@ public class LoginActivity extends BaseActivity {
                 showSingleToast(SOME_ERROR);
             }
         }
+
+        @Override
+        protected void onCancelled() {
+            Log.d(TAG_LOG, "onCancelled");
+            ErrorDialog errorDialog = new ErrorDialog();
+            errorDialog.show(getSupportFragmentManager(), TAG_ERROR_DIALOG);
+        }
+
     }
+
+
 }
